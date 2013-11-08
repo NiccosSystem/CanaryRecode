@@ -1,6 +1,8 @@
 package net.canarymod.api.world.blocks;
 
 import java.util.Arrays;
+
+import net.canarymod.api.inventory.CanaryBlockInventory;
 import net.canarymod.api.inventory.CanaryItem;
 import net.canarymod.api.inventory.InventoryType;
 import net.canarymod.api.inventory.Item;
@@ -13,7 +15,7 @@ import net.minecraft.server.TileEntityChest;
  * 
  * @author Jason (darkdiplomat)
  */
-public class CanaryChest extends CanaryContainerBlock implements Chest {
+public class CanaryChest extends CanaryBlockInventory implements Chest {
 
     /**
      * Constructs a new wrapper for TileEntityChest
@@ -67,7 +69,7 @@ public class CanaryChest extends CanaryContainerBlock implements Chest {
             return null;
         }
         if (block.getType() == BlockType.Chest) {
-            ComplexBlock cblock = getWorld().getOnlyComplexBlock(block);
+            TileEntity cblock = getWorld().getOnlyTileEntity(block);
 
             if ((cblock != null) && (cblock instanceof Chest)) {
                 Chest chest = (Chest) cblock;

@@ -9,7 +9,7 @@ import net.minecraft.server.EntityPlayer;
 
 /**
  * Human implementation
- * 
+ *
  * @author Jason (darkdiplomat)
  */
 public abstract class CanaryHuman extends CanaryLivingBase implements Human {
@@ -46,8 +46,8 @@ public abstract class CanaryHuman extends CanaryLivingBase implements Human {
      */
     @Override
     public void kill() {
+        this.getCapabilities().setInvulnerable(false); // FORCE DEATH!
         super.kill();
-        dropInventory();
     }
 
     /**
@@ -74,7 +74,7 @@ public abstract class CanaryHuman extends CanaryLivingBase implements Human {
      */
     @Override
     public boolean isBlocking() {
-        return getHandle().bq();
+        return getHandle().br();
     }
 
     /**
@@ -90,10 +90,10 @@ public abstract class CanaryHuman extends CanaryLivingBase implements Human {
      */
     @Override
     public Item getItemHeld() {
-        Item item = ((CanaryPlayerInventory) getInventory()).getItemInHand();
+        Item item = getInventory().getItemInHand();
 
         if (item != null) {
-            item.setSlot(((CanaryPlayerInventory) getInventory()).getSelectedHotbarSlotId());
+            item.setSlot(getInventory().getSelectedHotbarSlotId());
             return item;
         }
         return null;
@@ -104,7 +104,7 @@ public abstract class CanaryHuman extends CanaryLivingBase implements Human {
      */
     @Override
     public void dropItem(Item item) {
-        getWorld().dropItem((int) getX(), (int) getY(), (int) getZ(), item);
+        getWorld().dropItem(getPosition(), item);
     }
 
     /**

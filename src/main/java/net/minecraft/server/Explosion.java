@@ -1,12 +1,5 @@
 package net.minecraft.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import net.canarymod.api.CanaryDamageSource;
 import net.canarymod.api.entity.Explosive;
 import net.canarymod.api.world.blocks.CanaryBlock;
@@ -14,6 +7,14 @@ import net.canarymod.hook.entity.DamageHook;
 import net.canarymod.hook.world.ExplosionHook;
 import net.canarymod.hook.world.IgnitionHook;
 import net.canarymod.hook.world.IgnitionHook.IgnitionCause;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class Explosion {
 
@@ -100,7 +101,8 @@ public class Explosion {
         }
 
         // Check entity if instance of Explosive and can damage world
-        if (this.f == null || (this.f.getCanaryEntity() instanceof Explosive && ((Explosive) this.f.getCanaryEntity()).canDamageWorld())) {
+        //        null     or                non-Explosive                     or                      Explosive can damage world
+        if (this.f == null || !(this.f.getCanaryEntity() instanceof Explosive) || ((Explosive) this.f.getCanaryEntity()).canDamageWorld()) {
             // CanaryMod: Add affected blocks into a List of Blocks.
             List<net.canarymod.api.world.blocks.Block> blkAff = new ArrayList<net.canarymod.api.world.blocks.Block>(hashset.size());
 
@@ -148,7 +150,8 @@ public class Explosion {
                     double d10 = (1.0D - d7) * d9;
 
                     // Check entity if instance of Explosive and can damage entities
-                    if (this.f == null || (this.f.getCanaryEntity() instanceof Explosive && ((Explosive) this.f.getCanaryEntity()).canDamageEntities())) {
+                    //        null     or                non-Explosive                     or                      Explosive can damage entities
+                    if (this.f == null || !(this.f.getCanaryEntity() instanceof Explosive) || ((Explosive) this.f.getCanaryEntity()).canDamageEntities()) {
                         // CanaryMod Damage hook: Explosions
                         float damage = (float) ((int) ((d10 * d10 + d10) / 2.0D * 8.0D * (double) this.g + 1.0D));
                         CanaryDamageSource source = DamageSource.a(this).getCanaryDamageSource();
@@ -178,7 +181,8 @@ public class Explosion {
         this.k.a(this.c, this.d, this.e, "random.explode", 4.0F, (1.0F + (this.k.s.nextFloat() - this.k.s.nextFloat()) * 0.2F) * 0.7F);
         if (this.g >= 2.0F && this.b) {
             this.k.a("hugeexplosion", this.c, this.d, this.e, 1.0D, 0.0D, 0.0D);
-        } else {
+        }
+        else {
             this.k.a("largeexplode", this.c, this.d, this.e, 1.0D, 0.0D, 0.0D);
         }
 

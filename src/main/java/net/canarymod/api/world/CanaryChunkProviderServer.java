@@ -1,5 +1,8 @@
 package net.canarymod.api.world;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.server.ChunkCoordIntPair;
 
 public class CanaryChunkProviderServer implements ChunkProvider {
@@ -83,7 +86,7 @@ public class CanaryChunkProviderServer implements ChunkProvider {
 
     @Override
     public void dropChunk(int x, int z) {
-        handle.d(x, z);
+        handle.b(x, z);
     }
 
     @Override
@@ -99,6 +102,26 @@ public class CanaryChunkProviderServer implements ChunkProvider {
     @Override
     public String getStatistics() {
         return handle.e();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<Chunk> getLoadedChunks() {
+        List<Chunk> loadedChunks = new ArrayList<Chunk>(this.handle.g.size());
+        for (net.minecraft.server.Chunk nmschunk : (List<net.minecraft.server.Chunk>)this.handle.g) {
+            loadedChunks.add(nmschunk.getCanaryChunk());
+        }
+        return loadedChunks;
+    }
+
+    /**
+     * Get the handle for this CanaryChunkProviderServer.
+     * That is the NMS object.
+     *
+     * @return net.minecraft.server.ChunkProviderServer
+     */
+    public net.minecraft.server.ChunkProviderServer getHandle() {
+        return this.handle;
     }
 
 }

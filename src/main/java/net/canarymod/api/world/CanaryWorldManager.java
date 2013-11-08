@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+
 import net.canarymod.Canary;
 import net.canarymod.api.CanaryServer;
 import net.canarymod.api.entity.living.humanoid.Player;
@@ -15,7 +16,7 @@ import net.minecraft.server.WorldServer;
 
 /**
  * This is a container for all of the worlds.
- * 
+ *
  * @author Jos Kuijpers
  * @author Chris Ksoll
  */
@@ -26,9 +27,9 @@ public class CanaryWorldManager implements WorldManager {
     private HashMap<String, Boolean> markedForUnload;
 
     public CanaryWorldManager() {
-        DimensionType.addType("NORMAL", 0);
-        DimensionType.addType("NETHER", -1);
-        DimensionType.addType("END", 1);
+        DimensionType.registerType("NORMAL", 0);
+        DimensionType.registerType("NETHER", -1);
+        DimensionType.registerType("END", 1);
         File worldsFolders = new File("worlds");
 
         if (!worldsFolders.exists()) {
@@ -55,7 +56,7 @@ public class CanaryWorldManager implements WorldManager {
     /**
      * Implementation specific, do not call outside of NMS!
      * Adds an already prepared world to the world manager
-     * 
+     *
      * @param world
      */
     public void addWorld(CanaryWorld world) {
@@ -65,7 +66,7 @@ public class CanaryWorldManager implements WorldManager {
 
     @Override
     public World getWorld(String name, boolean autoload) {
-        DimensionType t = DimensionType.fromName(name.substring(Math.max(0, name.lastIndexOf("_"))));
+        DimensionType t = DimensionType.fromName(name.substring(Math.max(0, name.lastIndexOf("_")+1)));
         String nameOnly = name.substring(0, Math.max(0, name.lastIndexOf("_")));
 
         if (t != null) {
@@ -117,7 +118,7 @@ public class CanaryWorldManager implements WorldManager {
 
     @Override
     public boolean createWorld(String name, long seed, DimensionType type) {
-        ((CanaryServer) Canary.getServer()).getHandle().loadWorld(name, seed);
+        ((CanaryServer) Canary.getServer()).getHandle().loadWorld(name, seed, type);
         return true;
     }
 
@@ -177,8 +178,6 @@ public class CanaryWorldManager implements WorldManager {
 
     /**
      * This'll actually remove all marked worlds from the system so that they may get GC'd soon after
-     * 
-     * @param world
      */
     private void removeWorlds() {
         Iterator<String> iter = markedForUnload.keySet().iterator();
@@ -213,6 +212,11 @@ public class CanaryWorldManager implements WorldManager {
     }
 
     @Override
+    public boolean worldIsLoaded(String name, DimensionType type) {
+        return loadedWorlds.containsKey(name.concat("_").concat(type.getName()));
+    }
+
+    @Override
     public boolean worldExists(String name) {
         return new File("worlds/" + name.split("_")[0] + "/" + name).isDirectory();
     }
@@ -220,10 +224,5 @@ public class CanaryWorldManager implements WorldManager {
     @Override
     public ArrayList<String> getExistingWorlds() {
         return existingWorlds; // TODO: This only reads base folders not the real dimension folders!
-    }
-
-    // Implementation specific shortcuts
-    public WorldServer getWorldServer(String name, int id) {
-        return (WorldServer) ((CanaryWorld) loadedWorlds.get(name)).getHandle();
     }
 }

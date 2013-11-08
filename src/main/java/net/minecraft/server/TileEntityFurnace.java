@@ -1,13 +1,14 @@
 package net.minecraft.server;
 
 import net.canarymod.api.world.blocks.CanaryFurnace;
+import net.canarymod.hook.world.SmeltBeginHook;
 import net.canarymod.hook.world.SmeltHook;
 
 public class TileEntityFurnace extends TileEntity implements ISidedInventory {
 
-    private static final int[] d = new int[]{ 0 };
-    private static final int[] e = new int[]{ 2, 1 };
-    private static final int[] f = new int[]{ 1 };
+    private static final int[] d = new int[]{0};
+    private static final int[] e = new int[]{2, 1};
+    private static final int[] f = new int[]{1};
     public ItemStack[] g = new ItemStack[3]; // CanaryMod: private => public
     public int a = 0;
     public int b = 0;
@@ -154,7 +155,14 @@ public class TileEntityFurnace extends TileEntity implements ISidedInventory {
                 }
             }
 
-            if (this.j() && this.u()) {
+            // CanaryMod: SmeltBegin
+            SmeltBeginHook sbh = null;
+            if (this.c == 0 && this.j() && this.u()) { // Check that this is the start of a smelting process and that smelting can begin
+                sbh = (SmeltBeginHook) new SmeltBeginHook(this.getCanaryFurnace(), this.g[0].getCanaryItem()).call();
+            }
+            //
+
+            if (this.j() && this.u() && (sbh == null || !sbh.isCanceled())) { // CanaryMod: Verify the hook
                 ++this.c;
                 if (this.c == 200) {
                     this.c = 0;
@@ -190,7 +198,7 @@ public class TileEntityFurnace extends TileEntity implements ISidedInventory {
         if (this.u()) {
             ItemStack itemstack = FurnaceRecipes.a().b(this.g[0].b().cv);
             // CanaryMod: Smelt
-            SmeltHook hook = (SmeltHook) new SmeltHook(getCanaryFurnace(), itemstack.getCanaryItem()).call();
+            SmeltHook hook = (SmeltHook) new SmeltHook(getCanaryFurnace(), this.g[0].getCanaryItem(), itemstack.getCanaryItem()).call();
             if (hook.isCanceled()) {
                 return;
             }
@@ -232,8 +240,7 @@ public class TileEntityFurnace extends TileEntity implements ISidedInventory {
                 }
             }
 
-            return item instanceof ItemTool && ((ItemTool) item).g().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).i().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).g().equals("WOOD") ? 200 : (i0 == Item.F.cv ? 100 : (i0 == Item.o.cv ? 1600 : (i0 == Item.aA.cv ? 20000 : (i0 == Block.D.cF ? 100
-                    : (i0 == Item.bq.cv ? 2400 : 0)))))));
+            return item instanceof ItemTool && ((ItemTool) item).g().equals("WOOD") ? 200 : (item instanceof ItemSword && ((ItemSword) item).i().equals("WOOD") ? 200 : (item instanceof ItemHoe && ((ItemHoe) item).g().equals("WOOD") ? 200 : (i0 == Item.F.cv ? 100 : (i0 == Item.o.cv ? 1600 : (i0 == Item.aA.cv ? 20000 : (i0 == Block.D.cF ? 100 : (i0 == Item.bq.cv ? 2400 : 0)))))));
         }
     }
 
@@ -242,12 +249,19 @@ public class TileEntityFurnace extends TileEntity implements ISidedInventory {
     }
 
     public boolean a(EntityPlayer entityplayer) {
+        // CanaryMod: remote inventories
+        if (getCanaryFurnace().canOpenRemote()) {
+            return true;
+        }
+        //
         return this.k.r(this.l, this.m, this.n) != this ? false : entityplayer.e((double) this.l + 0.5D, (double) this.m + 0.5D, (double) this.n + 0.5D) <= 64.0D;
     }
 
-    public void k_() {}
+    public void k_() {
+    }
 
-    public void g() {}
+    public void g() {
+    }
 
     public boolean b(int i0, ItemStack itemstack) {
         return i0 == 2 ? false : (i0 == 1 ? b(itemstack) : true);

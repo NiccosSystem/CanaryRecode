@@ -1,10 +1,11 @@
 package net.minecraft.server;
 
+import net.canarymod.api.nbt.CanaryCompoundTag;
+import net.canarymod.api.nbt.CompoundTag;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import net.canarymod.api.nbt.CanaryCompoundTag;
-import net.canarymod.api.world.blocks.ComplexBlock;
 
 public class TileEntity {
 
@@ -19,17 +20,19 @@ public class TileEntity {
     public Block q;
 
     // CanaryMod: Variable Declaration
-    public ComplexBlock complexBlock;
+    public net.canarymod.api.world.blocks.TileEntity complexBlock;
     private CanaryCompoundTag meta = new CanaryCompoundTag("Canary"); // hold it for extra data
 
     // CanaryMod: End
 
-    public TileEntity() {}
+    public TileEntity() {
+    }
 
     private static void a(Class oclass0, String s0) {
         if (a.containsKey(s0)) {
             throw new IllegalArgumentException("Duplicate id: " + s0);
-        } else {
+        }
+        else {
             a.put(s0, oclass0);
             b.put(oclass0, s0);
         }
@@ -61,7 +64,8 @@ public class TileEntity {
 
         if (s0 == null) {
             throw new RuntimeException(this.getClass() + " is missing a mapping! This is a bug!");
-        } else {
+        }
+        else {
             nbttagcompound.a("id", s0);
             nbttagcompound.a("x", this.l);
             nbttagcompound.a("y", this.m);
@@ -72,7 +76,8 @@ public class TileEntity {
         }
     }
 
-    public void h() {}
+    public void h() {
+    }
 
     public static TileEntity c(NBTTagCompound nbttagcompound) {
         TileEntity tileentity = null;
@@ -83,13 +88,15 @@ public class TileEntity {
             if (oclass0 != null) {
                 tileentity = (TileEntity) oclass0.newInstance();
             }
-        } catch (Exception exception) {
+        }
+        catch (Exception exception) {
             exception.printStackTrace();
         }
 
         if (tileentity != null) {
             tileentity.a(nbttagcompound);
-        } else {
+        }
+        else {
             MinecraftServer.F().an().b("Skipping TileEntity with id " + nbttagcompound.i("id"));
         }
 
@@ -153,6 +160,12 @@ public class TileEntity {
         crashreportcategory.a("Actual block type", (Callable) (new CallableTileEntityID(this)));
         crashreportcategory.a("Actual block data value", (Callable) (new CallableTileEntityData(this)));
     }
+
+    // CanaryMod:
+    public CompoundTag getMetaTag() {
+        return meta;
+    }
+    //
 
     static Map t() {
         return b;

@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import net.canarymod.Canary;
 import net.canarymod.api.CanaryDamageSource;
-import net.canarymod.api.CanaryPacket;
+import net.canarymod.api.packet.CanaryPacket;
 import net.canarymod.api.DamageSource;
 import net.canarymod.api.DamageType;
 import net.canarymod.api.entity.CanaryEntity;
@@ -20,6 +20,8 @@ import net.canarymod.api.world.position.Location;
 import net.minecraft.server.EntityLivingBase;
 import net.minecraft.server.Packet12PlayerLook;
 import net.minecraft.server.Packet32EntityLook;
+import net.minecraft.server.RangedAttribute;
+import net.minecraft.server.SharedMonsterAttributes;
 
 public abstract class CanaryLivingBase extends CanaryEntity implements LivingBase {
 
@@ -32,7 +34,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public float getHealth() {
-        return getHandle().aM();
+        return getHandle().aN();
     }
 
     /**
@@ -49,6 +51,22 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
     @Override
     public void increaseHealth(float increase) {
         getHandle().f(increase);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getMaxHealth(){
+        return getHandle().aX().a(SharedMonsterAttributes.a).b();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setMaxHealth(double maxHealth){
+        getHandle().a(SharedMonsterAttributes.a).a(maxHealth);
     }
 
     /**
@@ -96,7 +114,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public int getAge() {
-        return getHandle().aE();
+        return getHandle().aF();
     }
 
     /**
@@ -112,7 +130,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public void kill() {
-        setHealth(0);
+        this.dealDamage(DamageType.GENERIC, 10000.0F); //overkill?
     }
 
     /**
@@ -142,7 +160,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
         if (effect == null) {
             return;
         }
-        getHandle().d(((CanaryPotionEffect) effect).getHandle());
+        getHandle().c(((CanaryPotionEffect) effect).getHandle());
     }
 
     /**
@@ -150,7 +168,21 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public void addPotionEffect(PotionEffectType type, int duration, int amplifier) {
-        getHandle().d(new net.minecraft.server.PotionEffect(type.getID(), duration, amplifier));
+        getHandle().c(new net.minecraft.server.PotionEffect(type.getID(), duration, amplifier));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void removePotionEffect(PotionEffectType type) {
+        getHandle().k(type.getID());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void removeAllPotionEffects() {
+        getHandle().removeAllPotionEffects();
     }
 
     /**
@@ -182,7 +214,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
     @SuppressWarnings("unchecked")
     @Override
     public List<PotionEffect> getAllActivePotionEffects() {
-        Collection<net.minecraft.server.PotionEffect> effect_collection = ((net.minecraft.server.EntityLivingBase) entity).aK();
+        Collection<net.minecraft.server.PotionEffect> effect_collection = ((net.minecraft.server.EntityLivingBase) entity).aL();
         List<PotionEffect> list = new ArrayList<PotionEffect>();
 
         for (net.minecraft.server.PotionEffect nms_effect : effect_collection) {
@@ -196,7 +228,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public LivingBase getRevengeTarget() {
-        net.minecraft.server.EntityLivingBase target = getHandle().aD();
+        net.minecraft.server.EntityLivingBase target = getHandle().aE();
         if (target != null) {
             return (LivingBase) target.getCanaryEntity();
         }
@@ -220,7 +252,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public LivingBase getLastAssailant() {
-        net.minecraft.server.EntityLivingBase target = ((net.minecraft.server.EntityLivingBase) entity).aD();
+        net.minecraft.server.EntityLivingBase target = ((net.minecraft.server.EntityLivingBase) entity).aE();
         if (target != null) {
             return (EntityLiving) target.getCanaryEntity();
         }
@@ -298,7 +330,7 @@ public abstract class CanaryLivingBase extends CanaryEntity implements LivingBas
      */
     @Override
     public int getArrowCountInEntity() {
-        return getHandle().aT();
+        return getHandle().aU();
     }
 
     /**

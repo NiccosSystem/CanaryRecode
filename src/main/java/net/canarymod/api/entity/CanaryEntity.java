@@ -1,6 +1,5 @@
 package net.canarymod.api.entity;
 
-import java.util.UUID;
 import net.canarymod.api.entity.living.Golem;
 import net.canarymod.api.entity.living.LivingBase;
 import net.canarymod.api.entity.living.animal.EntityAnimal;
@@ -18,9 +17,11 @@ import net.canarymod.api.world.position.Position;
 import net.canarymod.api.world.position.Vector3D;
 import net.minecraft.server.NBTTagCompound;
 
+import java.util.UUID;
+
 /**
  * Entity Wrapper
- * 
+ *
  * @author Jason (darkdiplomat)
  */
 public abstract class CanaryEntity implements Entity {
@@ -107,19 +108,32 @@ public abstract class CanaryEntity implements Entity {
     @Override
     public void setMotionX(double motionX) {
         entity.x = motionX;
-        entity.I = true;
+        entity.J = true;
     }
 
     @Override
     public void setMotionY(double motionY) {
         entity.y = motionY;
-        entity.I = true;
+        entity.J = true;
     }
 
     @Override
     public void setMotionZ(double motionZ) {
         entity.z = motionZ;
-        entity.I = true;
+        entity.J = true;
+    }
+
+    @Override
+    public Vector3D getMotion() {
+        return new Vector3D(getMotionX(), getMotionY(), getMotionZ());
+    }
+
+    @Override
+    public void moveEntity(double motionX, double motionY, double motionZ) {
+        entity.x = motionX;
+        entity.y = motionY;
+        entity.z = motionZ;
+        entity.J = true;
     }
 
     @Override
@@ -135,8 +149,8 @@ public abstract class CanaryEntity implements Entity {
     }
 
     @Override
-    public void teleportTo(double x, double y, double z, float rotation, float pitch) {
-        teleportTo(x, y, z, rotation, pitch, getWorld());
+    public void teleportTo(double x, double y, double z, float pitch, float rotation) {
+        teleportTo(x, y, z, pitch, rotation, getWorld());
     }
 
     @Override
@@ -159,17 +173,12 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public void teleportTo(Location location) {
-        teleportTo(location.getX(), location.getY(), location.getZ(), location.getRotation(), location.getPitch(), location.getWorld());
+        teleportTo(location.getX(), location.getY(), location.getZ(), location.getPitch(), location.getRotation(), location.getWorld());
     }
 
     @Override
     public void teleportTo(Position pos) {
         teleportTo(pos.getX(), pos.getY(), pos.getZ(), 0.0F, 0.0F);
-    }
-
-    @Override
-    public void setDimension(World dim) {
-        this.entity.a(((CanaryWorld) dim).getHandle());
     }
 
     @Override
@@ -229,7 +238,7 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public boolean isSprinting() { // 3
-        return entity.ag();
+        return entity.ai();
     }
 
     @Override
@@ -239,7 +248,7 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public boolean isSneaking() { // 1
-        return entity.ag();
+        return entity.ah();
     }
 
     @Override
@@ -249,7 +258,7 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public boolean isInvisible() { // 5
-        return entity.ah();
+        return entity.aj();
     }
 
     @Override
@@ -259,7 +268,7 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public String getName() {
-        return entity.am();
+        return entity.an();
     }
 
     @Override
@@ -279,12 +288,7 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public UUID getUUID() {
-        return entity.av();
-    }
-
-    @Override
-    public Vector3D getMotion() {
-        return new Vector3D(getMotionX(), getMotionY(), getMotionZ());
+        return entity.aw();
     }
 
     @Override
@@ -309,7 +313,7 @@ public abstract class CanaryEntity implements Entity {
 
     @Override
     public boolean isRiding() {
-        return entity.ae();
+        return entity.ag();
     }
 
     @Override
@@ -333,12 +337,10 @@ public abstract class CanaryEntity implements Entity {
         return null;
     }
 
-    /**
-     * Destroys this entity
-     */
+    /** Destroys this entity */
     @Override
     public void destroy() {
-        entity.w();
+        entity.x();
     }
 
     @Override
@@ -388,14 +390,9 @@ public abstract class CanaryEntity implements Entity {
         return entity.getMetaData();
     }
 
-    @Override
-    public void moveEntity(double motionX, double motionY, double motionZ) {
-        entity.d(motionX, motionY, motionZ);
-    }
-
     /**
      * Gets the Minecraft entity being wrapped
-     * 
+     *
      * @return entity
      */
     public abstract net.minecraft.server.Entity getHandle();

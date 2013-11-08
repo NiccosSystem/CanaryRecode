@@ -1,14 +1,5 @@
 package net.minecraft.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
 import net.canarymod.AutocompleteUtils;
 import net.canarymod.Canary;
 import net.canarymod.LineTracer;
@@ -25,14 +16,18 @@ import net.canarymod.api.world.blocks.CanaryBlock;
 import net.canarymod.api.world.position.Location;
 import net.canarymod.channels.CustomPayloadChannelException;
 import net.canarymod.config.Configuration;
-import net.canarymod.hook.player.BlockLeftClickHook;
-import net.canarymod.hook.player.BlockRightClickHook;
-import net.canarymod.hook.player.DisconnectionHook;
-import net.canarymod.hook.player.PlayerArmSwingHook;
-import net.canarymod.hook.player.PlayerMoveHook;
-import net.canarymod.hook.player.SignChangeHook;
-import net.canarymod.hook.player.SlotClickHook;
-import net.canarymod.hook.player.TeleportHook;
+import net.canarymod.hook.player.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
 
 public class NetServerHandler extends NetHandler {
 
@@ -95,17 +90,39 @@ public class NetServerHandler extends NetHandler {
     }
 
     public void c(String s0) {
-        // CanaryMod disconnect hook
-        DisconnectionHook hook = (DisconnectionHook) new DisconnectionHook(serverHandler.getUser(), s0, ChatMessageComponent.b("multiplayer.player.left", new Object[]{ this.c.c_() }).a(EnumChatFormatting.o).toString()).call();
+        if (!this.b) {
+            // CanaryMod: KickHook
+            new KickHook(serverHandler.getUser(), Canary.getServer(), s0).call();
+            //
+            this.c.l();
+            this.b(new Packet255KickDisconnect(s0));
+            this.a.d();
+            // CanaryMod: DisconnectionHook
+            DisconnectionHook disconHook = (DisconnectionHook) new DisconnectionHook(this.c.getPlayer(), s0, ChatMessageComponent.b("multiplayer.player.left", new Object[]{this.c.ay()}).a(EnumChatFormatting.o).a(true)).call();
+            if (!disconHook.isHidden()) {
+                this.d.af().a(ChatMessageComponent.d(disconHook.getLeaveMessage()));
+            }
+            //
+            this.d.af().e(this.c);
+            this.b = true;
+
+            // CanaryMod unregester Custom Payload registrations
+            Canary.channels().unregisterClientAll(serverHandler);
+            // End
+        }
+    }
+
+    public void kickNoHook(String s0) {
         if (!this.b) {
             this.c.l();
             this.b(new Packet255KickDisconnect(s0));
             this.a.d();
-            // CanaryMod hook data
-            if (!hook.isHidden()) {
-                this.d.af().a((Packet) (new Packet3Chat(ChatMessageComponent.d(hook.getLeaveMessage()))));
+            // CanaryMod: DisconnectionHook
+            DisconnectionHook disconHook = (DisconnectionHook) new DisconnectionHook(this.c.getPlayer(), s0, ChatMessageComponent.b("multiplayer.player.left", new Object[]{this.c.ay()}).a(EnumChatFormatting.o).a(true)).call();
+            if (!disconHook.isHidden()) {
+                this.d.af().a(ChatMessageComponent.d(disconHook.getLeaveMessage()));
             }
-            // //
+            //
             this.d.af().e(this.c);
             this.b = true;
 
@@ -139,7 +156,7 @@ public class NetServerHandler extends NetHandler {
                 PlayerMoveHook hook = (PlayerMoveHook) new PlayerMoveHook(c.getPlayer(), from, c.getPlayer().getLocation()).call();
                 if (hook.isCanceled()) {
                     // Return the player to their previous position gracefully, hopefully bypassing the TeleportHook and not going derp.
-                    this.c.a.b(new Packet13PlayerLookMove(from.getX(), from.getY() + 1.6200000047683716D, from.getY(), from.getZ(), from.getRotation(), from.getPitch(), false));
+                    this.c.a.b(new Packet13PlayerLookMove(from.getX(), from.getY() + 1.6200000047683716D, from.getY(), from.getZ(), from.getRotation(), from.getPitch(), this.c.F));
                     this.c.b(from.getX(), from.getY(), from.getZ()); // correct position server side to, or get BoUnCy
                     return;
                 }
@@ -155,7 +172,7 @@ public class NetServerHandler extends NetHandler {
                     float f0 = this.c.A;
                     float f1 = this.c.B;
 
-                    this.c.o.V();
+                    this.c.o.W();
                     d1 = this.c.u;
                     d2 = this.c.v;
                     d3 = this.c.w;
@@ -169,7 +186,7 @@ public class NetServerHandler extends NetHandler {
                     this.c.X = 0.0F;
                     this.c.a(d1, d2, d3, f0, f1);
                     if (this.c.o != null) {
-                        this.c.o.V();
+                        this.c.o.W();
                     }
 
                     this.d.af().d(this.c);
@@ -183,7 +200,7 @@ public class NetServerHandler extends NetHandler {
                     return;
                 }
 
-                if (this.c.bg()) {
+                if (this.c.bh()) {
                     this.c.h();
                     this.c.a(this.n, this.o, this.p, this.c.A, this.c.B);
                     worldserver.g(this.c);
@@ -211,7 +228,7 @@ public class NetServerHandler extends NetHandler {
                     d2 = packet10flying.b;
                     d3 = packet10flying.c;
                     d4 = packet10flying.d - packet10flying.b;
-                    if (!this.c.bg() && (d4 > 1.65D || d4 < 0.1D)) {
+                    if (!this.c.bh() && (d4 > 1.65D || d4 < 0.1D)) {
                         this.c("Illegal stance");
                         this.d.an().b(this.c.c_() + " had an illegal stance: " + d4);
                         return;
@@ -271,7 +288,7 @@ public class NetServerHandler extends NetHandler {
                 d10 = d4 * d4 + d5 * d5 + d6 * d6;
                 boolean flag1 = false;
 
-                if (d10 > 0.0625D && !this.c.bg() && !this.c.c.d()) {
+                if (d10 > 0.0625D && !this.c.bh() && !this.c.c.d()) {
                     flag1 = true;
                     this.d.an().b(this.c.c_() + " moved wrongly!");
                 }
@@ -279,7 +296,7 @@ public class NetServerHandler extends NetHandler {
                 this.c.a(d1, d2, d3, f2, f3);
                 boolean flag2 = worldserver.a(this.c, this.c.E.c().e((double) f4, (double) f4, (double) f4)).isEmpty();
 
-                if (flag0 && (flag1 || !flag2) && !this.c.bg()) {
+                if (flag0 && (flag1 || !flag2) && !this.c.bh()) {
                     this.a(this.n, this.o, this.p, f2, f3, c.getCanaryWorld().getType().getId(), c.getCanaryWorld().getName(), TeleportHook.TeleportCause.MOVEMENT);
                     return;
                 }
@@ -331,13 +348,14 @@ public class NetServerHandler extends NetHandler {
     public void a(Packet14BlockDig packet14blockdig) {
         WorldServer worldserver = (WorldServer) this.c.getCanaryWorld().getHandle(); // this.d.a(this.c.ar);
 
+        this.c.u();
         if (packet14blockdig.e == 4) {
             // TODO: crash from rapid item drop prevention
             this.c.a(false);
         } else if (packet14blockdig.e == 3) {
             this.c.a(true);
         } else if (packet14blockdig.e == 5) {
-            this.c.bs();
+            this.c.bt();
         } else {
             boolean flag0 = false;
 
@@ -415,9 +433,10 @@ public class NetServerHandler extends NetHandler {
         int i2 = packet15place.g();
         int i3 = packet15place.h();
 
+        this.c.u();
+
         // CanaryMod: BlockRightClick/ItemUse
         CanaryBlock blockClicked = (CanaryBlock) worldserver.getCanaryWorld().getBlockAt(i0, i1, i2);
-
         blockClicked.setFaceClicked(BlockFace.fromByte((byte) i3));
 
         if (packet15place.h() == 255) {
@@ -432,7 +451,7 @@ public class NetServerHandler extends NetHandler {
             //
             this.c.c.itemUsed(this.c.getPlayer(), worldserver, itemstack, blockClicked); // CanaryMod: Redirect through ItemInWorldManager.itemUsed
         } else if (packet15place.f() >= this.d.ad() - 1 && (packet15place.h() == 1 || packet15place.f() >= this.d.ad())) {
-            this.c.a.b(new Packet3Chat(ChatMessageComponent.b("build.tooHigh", new Object[]{ Integer.valueOf(this.d.ad()) }).a(EnumChatFormatting.m)));
+            this.c.a.b(new Packet3Chat(ChatMessageComponent.b("build.tooHigh", new Object[]{Integer.valueOf(this.d.ad())}).a(EnumChatFormatting.m)));
             flag0 = true;
         } else {
             if (this.q && this.c.e((double) i0 + 0.5D, (double) i1 + 0.5D, (double) i2 + 0.5D) < 64.0D && (!this.d.a(worldserver, i0, i1, i2, this.c) || c.getPlayer().hasPermission("canary.world.spawnbuild")) && c.getPlayer().canBuild()) {
@@ -498,12 +517,18 @@ public class NetServerHandler extends NetHandler {
 
     @Override
     public void a(String s0, Object[] aobject) {
-        // CanaryMod: DisconnectionHook
-        DisconnectionHook hook = (DisconnectionHook) new DisconnectionHook(this.c.getPlayer(), s0, ChatMessageComponent.b("multiplayer.player.left", new Object[]{ this.c.aw() }).a(EnumChatFormatting.o).toString()).call();
         this.d.an().a(this.c.c_() + " lost connection: " + s0);
-        this.d.af().a((Packet) (new Packet3Chat(ChatMessageComponent.e(hook.getLeaveMessage()))));
+        // CanaryMod: DisconnectionHook
+        DisconnectionHook hook = (DisconnectionHook) new DisconnectionHook(this.c.getPlayer(), s0, ChatMessageComponent.b("multiplayer.player.left", new Object[]{this.c.ay()}).a(EnumChatFormatting.o).a(true)).call();
+        if (!hook.isHidden()) {
+            this.d.af().a((Packet) (new Packet3Chat(ChatMessageComponent.d(hook.getLeaveMessage()))));
+        }
+        //
         this.d.af().e(this.c);
         this.b = true;
+        // CanaryMod unregester Custom Payload registrations
+        Canary.channels().unregisterClientAll(serverHandler);
+        // End
         if (this.d.K() && this.c.c_().equals(this.d.J())) {
             this.d.an().a("Stopping singleplayer server as player logged out");
             this.d.p();
@@ -546,6 +571,7 @@ public class NetServerHandler extends NetHandler {
     public void a(Packet16BlockItemSwitch packet16blockitemswitch) {
         if (packet16blockitemswitch.a >= 0 && packet16blockitemswitch.a < InventoryPlayer.i()) {
             this.c.bn.c = packet16blockitemswitch.a;
+            this.c.u();
         } else {
             this.d.an().b(this.c.c_() + " tried to set an invalid carried item");
         }
@@ -556,7 +582,9 @@ public class NetServerHandler extends NetHandler {
         /* Diff visibility funkyness
         if (this.c.t() == 2) {
             this.b(new Packet3Chat(ChatMessageComponent.e("chat.cannotSend").a(EnumChatFormatting.m)));
-        } else {
+        }
+        else {
+            this.c.u();
             String s0 = packet3chat.a;
 
             if (s0.length() > 100) {
@@ -579,7 +607,7 @@ public class NetServerHandler extends NetHandler {
                         return;
                     }
 
-                    ChatMessageComponent chatmessagecomponent = ChatMessageComponent.b("chat.type.text", new Object[] { this.c.ax(), s0});
+                    ChatMessageComponent chatmessagecomponent = ChatMessageComponent.b("chat.type.text", new Object[] { this.c.ay(), s0});
 
                     this.d.af().a(chatmessagecomponent, false);
                 }
@@ -591,6 +619,12 @@ public class NetServerHandler extends NetHandler {
             }
         }*/
         // CanaryMod: Re-route to Player chat
+        // Reuse Anti-Spam
+        this.l += 20;
+        if (this.l > 200 && !this.d.af().e(this.c.c_())) {
+            this.c("disconnect.spam");
+        }
+        this.c.u(); //Not Idle
         this.c.getPlayer().chat(packet3chat.a);
     }
 
@@ -600,15 +634,17 @@ public class NetServerHandler extends NetHandler {
 
     @Override
     public void a(Packet18Animation packet18animation) {
+        this.c.u();
         if (packet18animation.b == 1) {
             // CanaryMod: PlayerLeftClick
             new PlayerArmSwingHook(this.c.getPlayer()).call();
-            this.c.aU();
+            this.c.aV();
         }
     }
 
     @Override
     public void a(Packet19EntityAction packet19entityaction) {
+        this.c.u();
         if (packet19entityaction.b == 1) {
             this.c.b(true);
         } else if (packet19entityaction.b == 2) {
@@ -643,6 +679,7 @@ public class NetServerHandler extends NetHandler {
         WorldServer worldserver = (WorldServer) this.c.getCanaryWorld().getHandle(); // this.d.a(this.c.ar);
         Entity entity = worldserver.a(packet7useentity.b);
 
+        this.c.u();
         if (entity != null) {
             boolean flag0 = this.c.o(entity);
             double d0 = 36.0D;
@@ -655,6 +692,12 @@ public class NetServerHandler extends NetHandler {
                 if (packet7useentity.c == 0) {
                     this.c.p(entity);
                 } else if (packet7useentity.c == 1) {
+                    if (entity instanceof EntityItem || entity instanceof EntityXPOrb || entity instanceof EntityArrow || entity == this.c) {
+                        this.c("Attempting to attack an invalid entity");
+                        this.d.f("Player " + this.c.c_() + " tried to attack an invalid entity");
+                        return;
+                    }
+
                     this.c.q(entity);
                 }
             }
@@ -663,6 +706,7 @@ public class NetServerHandler extends NetHandler {
 
     @Override
     public void a(Packet205ClientCommand packet205clientcommand) {
+        this.c.u();
         if (packet205clientcommand.a == 1) {
             if (this.c.j) {
                 this.c = this.d.af().a(this.c, 0, true);
@@ -676,7 +720,7 @@ public class NetServerHandler extends NetHandler {
                     this.c.a.c("You have died. Game over, man, it\'s game over!");
                 }
             } else {
-                if (this.c.aM() > 0.0F) {
+                if (this.c.aN() > 0.0F) {
                     return;
                 }
 
@@ -691,7 +735,8 @@ public class NetServerHandler extends NetHandler {
     }
 
     @Override
-    public void a(Packet9Respawn packet9respawn) {}
+    public void a(Packet9Respawn packet9respawn) {
+    }
 
     @Override
     public void a(Packet101CloseWindow packet101closewindow) {
@@ -700,6 +745,7 @@ public class NetServerHandler extends NetHandler {
 
     @Override
     public void a(Packet102WindowClick packet102windowclick) {
+        this.c.u();
         if (this.c.bp.d == packet102windowclick.a && this.c.bp.c(this.c)) {
 
             // CanaryMod: SlotClick
@@ -753,6 +799,7 @@ public class NetServerHandler extends NetHandler {
 
     @Override
     public void a(Packet108EnchantItem packet108enchantitem) {
+        this.c.u();
         if (this.c.bp.d == packet108enchantitem.a && this.c.bp.c(this.c)) {
             this.c.bp.a((EntityPlayer) this.c, packet108enchantitem.b);
             this.c.bp.b();
@@ -798,6 +845,7 @@ public class NetServerHandler extends NetHandler {
 
     @Override
     public void a(Packet130UpdateSign packet130updatesign) {
+        this.c.u();
         WorldServer worldserver = (WorldServer) this.c.getCanaryWorld().getHandle(); // this.d.a(this.c.ar);
 
         if (worldserver.f(packet130updatesign.a, packet130updatesign.b, packet130updatesign.c)) {
@@ -820,10 +868,12 @@ public class NetServerHandler extends NetHandler {
 
                 if (packet130updatesign.d[i1].length() > 15) {
                     flag0 = false;
-                } else {
+                } else if (Configuration.getServerConfig().getStrictSignCharacterChecks()) { // CanaryMod: Check if we use strict characters on signs
                     for (i0 = 0; i0 < packet130updatesign.d[i1].length(); ++i0) {
                         if (ChatAllowedCharacters.a.indexOf(packet130updatesign.d[i1].charAt(i0)) < 0) {
-                            flag0 = false;
+                            if (packet130updatesign.d[i1].charAt(i0) != '\u00A7') { // CanaryMod: Ignore Color Char
+                                flag0 = false;
+                            }
                         }
                     }
                 }
@@ -966,14 +1016,14 @@ public class NetServerHandler extends NetHandler {
                             i0 = datainputstream.readInt();
                             i1 = datainputstream.readInt();
                             int i2 = datainputstream.readInt();
-                            String s0 = Packet.a(datainputstream, 256);
+                            String s0 = Packet.a((DataInput) datainputstream, 256);
                             TileEntity tileentity = this.c.q.r(i0, i1, i2);
 
                             if (tileentity != null && tileentity instanceof TileEntityCommandBlock) {
                                 if (this.c.a(0, s0)) { // CanaryMod: Check for Command Permission
                                     ((TileEntityCommandBlock) tileentity).a(s0);
                                     this.c.q.j(i0, i1, i2);
-                                    this.c.a(ChatMessageComponent.b("advMode.setCommand.success", new Object[]{ s0 }));
+                                    this.c.a(ChatMessageComponent.b("advMode.setCommand.success", new Object[]{s0}));
                                 } else {
                                     this.c.a("No Permission to Command: " + s0); // CanaryMod: No Permission (locale?)
                                 }

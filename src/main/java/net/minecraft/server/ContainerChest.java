@@ -34,12 +34,17 @@ public class ContainerChest extends Container {
     }
 
     public boolean a(EntityPlayer entityplayer) {
+        // CanaryMod: remote inventories
+        if (this.inventory.canOpenRemote()) {
+            return true;
+        }
+        //
         return this.a.a(entityplayer);
     }
 
     public ItemStack b(EntityPlayer entityplayer, int i0) {
         ItemStack itemstack = null;
-        Slot slot = (Slot) this.c.get(i0);
+        Slot slot = (Slot)this.c.get(i0);
 
         if (slot != null && slot.e()) {
             ItemStack itemstack1 = slot.d();
@@ -49,13 +54,15 @@ public class ContainerChest extends Container {
                 if (!this.a(itemstack1, this.f * 9, this.c.size(), true)) {
                     return null;
                 }
-            } else if (!this.a(itemstack1, 0, this.f * 9, false)) {
+            }
+            else if (!this.a(itemstack1, 0, this.f * 9, false)) {
                 return null;
             }
 
             if (itemstack1.b == 0) {
-                slot.c((ItemStack) null);
-            } else {
+                slot.c((ItemStack)null);
+            }
+            else {
                 slot.f();
             }
         }

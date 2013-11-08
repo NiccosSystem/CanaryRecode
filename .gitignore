@@ -5,8 +5,9 @@
 .classpath
 *.jardesc
 *.jar
-bin/*
 /target/
 *.prefs
-dependency-reduced-pom.xml
+*.sw?
 /bin
+/.idea
+*.iml

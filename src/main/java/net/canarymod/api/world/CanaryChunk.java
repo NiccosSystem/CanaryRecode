@@ -4,15 +4,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.canarymod.api.entity.Entity;
-import net.canarymod.api.world.blocks.ComplexBlock;
+import net.canarymod.api.world.blocks.TileEntity;
 import net.canarymod.api.world.position.Position;
 import net.minecraft.server.ChunkPosition;
-import net.minecraft.server.TileEntity;
 
 /**
  * Chunk implementation
- * 
+ *
  * @author Chris (damagefilter)
  * @author Jason (darkdiplomat)
  * @author Jos Kuijpers
@@ -98,9 +98,9 @@ public class CanaryChunk implements Chunk {
         if (data.length != 256) {
             return;
         }
-        for (byte check : data) {
-            if (check < 0 || check > 22) {
-                check = (byte) 0;
+        for (int index = 0; index < data.length; index++) {
+            if (data[index] < 0 || data[index] > BiomeType.count()) { //Use BiomeType.count() so we don't forget to adjust this here
+                data[index] = 0;
             }
         }
         handle.a(data);
@@ -108,12 +108,12 @@ public class CanaryChunk implements Chunk {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Map<Position, ComplexBlock> getTileEntityMap() {
-        HashMap<Position, ComplexBlock> toRet = new HashMap<Position, ComplexBlock>();
+    public Map<Position, TileEntity> getTileEntityMap() {
+        HashMap<Position, TileEntity> toRet = new HashMap<Position, TileEntity>();
         synchronized (handle.i) {
             for (ChunkPosition pos : (Set<ChunkPosition>) handle.i.keySet()) {
                 Position cPos = new Position(pos.a, pos.b, pos.c);
-                TileEntity te = (TileEntity) handle.i.get(pos);
+                net.minecraft.server.TileEntity te = (net.minecraft.server.TileEntity) handle.i.get(pos);
                 if (te.complexBlock != null) {
                     toRet.put(cPos, te.complexBlock);
                 }
@@ -161,5 +161,31 @@ public class CanaryChunk implements Chunk {
     @Override
     public boolean isModified() {
         return handle.l;
+    }
+
+    @Override
+    public void generateSkyLightMap() {
+        handle.b();
+    }
+
+    @Override
+    public void updateSkyLightMap(boolean force) {
+        if(force) {
+            handle.q();
+        }
+        else {
+            handle.k();
+        }
+    }
+
+    @Override
+    public void relightBlock(int x, int y, int z) {
+        handle.h(x, y, z);
+
+    }
+
+    @Override
+    public Biome getBiome(int x, int z) {
+        return this.getHandle().a(x, z, this.getHandle().e.u()).getCanaryBiome();
     }
 }

@@ -31,6 +31,7 @@ import net.minecraft.server.FurnaceRecipes;
 import net.minecraft.server.IRecipe;
 import net.minecraft.server.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.NBTTagCompound;
 import net.minecraft.server.ServerConfigurationManager;
 import net.minecraft.server.ShapedRecipes;
 import net.minecraft.server.ShapelessRecipes;
@@ -51,15 +52,17 @@ public class CanaryServer implements Server {
     private MinecraftServer server;
     private GUIControl currentGUI = null;
     String canaryVersion = null;
-    String mcVersion = null;
+    private float tps = 20.0F; // Ticks Per Second Tracker
 
     /**
      * Create a new Server Wrapper
      * 
      * @param server
+     *            the MinecraftServer instance
      */
     public CanaryServer(MinecraftServer server) {
         this.server = server;
+        addSynchronousTask(new TPSTracker(this));
     }
 
     /**
@@ -221,7 +224,11 @@ public class CanaryServer implements Server {
 
     @Override
     public OfflinePlayer getOfflinePlayer(String player) {
-        CanaryCompoundTag comp = new CanaryCompoundTag(ServerConfigurationManager.getPlayerDatByName(player));
+        NBTTagCompound nbttagcompound = ServerConfigurationManager.getPlayerDatByName(player);
+        CanaryCompoundTag comp = null;
+        if (nbttagcompound != null) {
+            comp = new CanaryCompoundTag(nbttagcompound);
+        }
         return new CanaryOfflinePlayer(player, comp);
     }
 
@@ -263,7 +270,7 @@ public class CanaryServer implements Server {
 
     @Override
     public World getDefaultWorld() {
-        return getWorldManager().getWorld(getDefaultWorldName(), false);
+        return getWorldManager().getWorld(getDefaultWorldName(), true);
     }
 
     @Override
@@ -511,21 +518,46 @@ public class CanaryServer implements Server {
         this.currentGUI = guicontrol;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean addSynchronousTask(ServerTask task) {
         return ServerTaskManager.addTask(task);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean removeSynchronousTask(ServerTask task) {
         return ServerTaskManager.removeTask(task);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendPlayerListEntry(PlayerListEntry entry) {
         if (Configuration.getServerConfig().isPlayerListEnabled()) {
             server.af().a(new net.minecraft.server.Packet201PlayerInfo(entry.getName(), entry.isShown(), entry.getPing()));
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getCurrentTick() {
+        return server.aj();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getTicksPerSecond() {
+        return tps;
     }
 
     public class ServerTimer implements Runnable {
@@ -538,6 +570,34 @@ public class CanaryServer implements Server {
         @Override
         public synchronized void run() {
             timers.remove(name);
+        }
+    }
+
+    /**
+     * The internal CanaryServer Tick monitor task.
+     * Used to track ticks per second.
+     * 
+     * @author Jason (darkdiplomat)
+     */
+    private final class TPSTracker extends ServerTask {
+        private long tpsSpan = System.currentTimeMillis();
+        private int startTick = getCurrentTick();
+
+        private TPSTracker(CanaryServer server) {
+            super(server, 20L, true); // Run once every 20 ticks
+        }
+
+        @Override
+        public final void onReset() {
+            this.tpsSpan = System.currentTimeMillis();
+            this.startTick = getCurrentTick();
+        }
+
+        @Override
+        public final void run() {
+            long timeSpan = System.currentTimeMillis() - tpsSpan;
+            int ticks = getCurrentTick() - startTick;
+            tps = (float) ticks / ((float) timeSpan / 1000.0F);
         }
     }
 }
